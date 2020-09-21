@@ -1,7 +1,7 @@
 import cv2
 import os,sys,re
 
-def movie_separate(movie_file, start_sec_list, end_sec_list, offset_sec=0):
+def movie_separate(movie_file, start_sec_list, end_sec_list, offset_sec=0, silent=False):
 	
 	if not os.path.isfile(movie_file):
 		print(f'{movie_file} file not exist')
@@ -23,42 +23,45 @@ def movie_separate(movie_file, start_sec_list, end_sec_list, offset_sec=0):
 	cap.release()
 	
 	for stime, etime in zip(start_sec_list, end_sec_list):
-		stime_f=stime*fps
-		etime_f=etime*fps
+	
+		if type(stime)==str:
+			stime_str = re.findall('\d+', stime)
+			time_str = int(stime_str[0])*60 + int(stime_str[1])
+			stime_f=int(time_str*fps)
+			etime_str = re.findall('\d+', etime)
+			time_str = int(etime_str[0])*60 + int(etime_str[1])
+			etime_f=int(time_str*fps)
+			write_file_name=f'{file_prefix}{stime_str[0]}{stime_str[1]}_{etime_str[0]}{etime_str[1]}.mp4'
+		elif type(stime)==int:
+			stime_f=int(stime*fps)
+			etime_f=int(etime*fps)
+			write_file_name=f'{file_prefix}{stime}_{etime}.mp4'
+		print(stime_f, etime_f)
+		
+		# Write Movie File Makes
 		cap = cv2.VideoCapture(movie_file)
 		cap.set(cv2.CAP_PROP_POS_FRAMES, stime_f)
 		fmt = cv2.VideoWriter_fourcc('m', 'p', '4', 'v') #mp4
-		writer = cv2.VideoWriter(f'{file_prefix}_{stime}_{etime}.mp4', fmt, fps, (width,height)) # ライター作成
+		writer = cv2.VideoWriter(write_file_name, fmt, fps, (width,height)) # ライター作成
 
 		frame_pos=stime_f
 		while(frame_pos<etime_f):
 			ret, frame = cap.read()
 			if not ret:
 				break
-				
-			writer.write(frame)
-				
+			
+			if silent:
+				cv2.imshow("frame", frame)
+				key=cv2.waitKey(1) & 0xff
+				if key == ord('q'):
+					break
+			
+			writer.write(frame)	
 			frame_pos+=1
 		writer.release()
 	
-	"""
-	frame_pos=0
-	while(cap.isOpened()):
-		
-		ret, frame = cap.read()
-		if not ret:
-			break
-			
-		cv2.imshow("frame", frame)
-		key=cv2.waitKey(1) & 0xff
-		if key == ord('q'):
-			break
-		
-		frame_pos+=1
-	
-	cap.release()
-	"""
 	cv2.destroyAllWindows()
 
 if __name__ == '__main__':
 	movie_separate('data/mov_hts-samp009.mp4', [10,15], [12,18])
+	#movie_separate('data/mov_hts-samp009.mp4', ['00:10','00:15'], ['00:12','00:18'])

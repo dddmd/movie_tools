@@ -1,1 +1,3 @@
-data/*.mp4
+#data/*.mp4
+tmp/
+.ipynb_checkpoints

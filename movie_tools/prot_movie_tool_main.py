@@ -2,6 +2,10 @@ import cv2
 import os,sys,re
 
 def movie_separate(movie_file, start_sec_list, end_sec_list, offset_sec=0, silent=False):
+	"""
+		in
+			offset_sec:前後のオフセット時間(秒)
+	"""
 	
 	if not os.path.isfile(movie_file):
 		print(f'{movie_file} file not exist')
@@ -24,18 +28,18 @@ def movie_separate(movie_file, start_sec_list, end_sec_list, offset_sec=0, silen
 	
 	for stime, etime in zip(start_sec_list, end_sec_list):
 	
-		if type(stime)==str:
-			stime_str = re.findall('\d+', stime)
-			time_str = int(stime_str[0])*60 + int(stime_str[1])
-			stime_f=int(time_str*fps)
-			etime_str = re.findall('\d+', etime)
-			time_str = int(etime_str[0])*60 + int(etime_str[1])
-			etime_f=int(time_str*fps)
-			write_file_name=f'{file_prefix}{stime_str[0]}{stime_str[1]}_{etime_str[0]}{etime_str[1]}.mp4'
-		elif type(stime)==int:
-			stime_f=int(stime*fps)
-			etime_f=int(etime*fps)
-			write_file_name=f'{file_prefix}{stime}_{etime}.mp4'
+		#if type(stime)==str:
+		stime_str = re.findall('\d+', stime)
+		time_str = max(int(stime_str[0])*60 + int(stime_str[1]) - offset_sec, 0)
+		stime_f=int(time_str*fps)
+		etime_str = re.findall('\d+', etime)
+		time_str = min(int(etime_str[0])*60 + int(etime_str[1]) + offset_sec, int(count/fps))
+		etime_f=int(time_str*fps)
+		write_file_name=f'{file_prefix}{stime_str[0]}{stime_str[1]}_{etime_str[0]}{etime_str[1]}.mp4'
+		#elif type(stime)==int:
+		#	stime_f=int(max(stime-offset_sec, 0)*fps)
+		#	etime_f=int(min(etime+offset_sec, int(count/fps))*fps)
+		#	write_file_name=f'{file_prefix}{stime}_{etime}.mp4'
 		print(stime_f, etime_f)
 		
 		# Write Movie File Makes
@@ -63,5 +67,4 @@ def movie_separate(movie_file, start_sec_list, end_sec_list, offset_sec=0, silen
 	cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-	movie_separate('data/mov_hts-samp009.mp4', [10,15], [12,18])
-	#movie_separate('data/mov_hts-samp009.mp4', ['00:10','00:15'], ['00:12','00:18'])
+	movie_separate('data/mov_hts-samp009.mp4', ['00:10','00:15'], ['00:12','00:18'], offset_sec=1)
